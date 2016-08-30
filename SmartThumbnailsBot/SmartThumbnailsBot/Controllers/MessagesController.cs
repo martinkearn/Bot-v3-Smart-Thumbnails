@@ -7,12 +7,18 @@ using System.Web.Http;
 using System.Web.Http.Description;
 using Microsoft.Bot.Connector;
 using Newtonsoft.Json;
+using System.IO;
+using System.Net.Http.Headers;
+using System.Collections.Generic;
+using SmartThumbnailsBot.Services;
 
 namespace SmartThumbnailsBot
 {
     [BotAuthentication]
     public class MessagesController : ApiController
     {
+
+
         /// <summary>
         /// POST: api/Messages
         /// Receive a message from a user and reply to it
@@ -22,12 +28,52 @@ namespace SmartThumbnailsBot
             if (activity.Type == ActivityTypes.Message)
             {
                 ConnectorClient connector = new ConnectorClient(new Uri(activity.ServiceUrl));
-                // calculate something for us to return
-                int length = (activity.Text ?? string.Empty).Length;
 
-                // return our reply to the user
-                Activity reply = activity.CreateReply($"You sent {activity.Text} which was {length} characters");
-                await connector.Conversations.ReplyToActivityAsync(reply);
+                if (activity.Attachments.Count > 0)
+                {
+                    foreach (var attachment in activity.Attachments)
+                    {
+                        var sourceImage = await connector.HttpClient.GetStreamAsync(attachment.ContentUrl);
+
+                        var resizedImageBytes = await ComputerVisionService.GetImageThumbnailBytes(sourceImage, 100, 100);
+
+                        Activity replyToConversation = activity.CreateReply("I smartly resized an image for you, I'm good like that");
+                        replyToConversation.Recipient = activity.From;
+                        replyToConversation.Type = "message";
+                        replyToConversation.Attachments = new List<Attachment>();
+
+                        List<CardImage> cardImages = new List<CardImage>();
+                        cardImages.Add(new CardImage(url: "https://upload.wikimedia.org/wikipedia/en/a/a6/Bender_Rodriguez.png"));
+
+                        List<CardAction> cardButtons = new List<CardAction>();
+
+                        CardAction plButton = new CardAction()
+                        {
+                            Value = "https://en.wikipedia.org/wiki/Pig_Latin",
+                            Type = "openUrl",
+                            Title = "WikiPedia Page"
+                        };
+                        cardButtons.Add(plButton);
+
+                        ThumbnailCard plCard = new ThumbnailCard()
+                        {
+                            Title = "I'm a thumbnail card",
+                            Subtitle = "Pig Latin Wikipedia Page",
+                            Images = cardImages,
+                            Buttons = cardButtons
+                        };
+
+                        Attachment plAttachment = plCard.ToAttachment();
+                        replyToConversation.Attachments.Add(plAttachment);
+
+                        var reply = await connector.Conversations.SendToConversationAsync(replyToConversation);
+
+                    }
+                }
+                else
+                {
+                    //reply asking user for an image
+                }
             }
             else
             {
@@ -36,6 +82,8 @@ namespace SmartThumbnailsBot
             var response = Request.CreateResponse(HttpStatusCode.OK);
             return response;
         }
+
+        private string BytesToSrcString(byte[] bytes) => "data:image/jpg;base64," + Convert.ToBase64String(bytes);
 
         private Activity HandleSystemMessage(Activity message)
         {
