@@ -29,59 +29,46 @@ namespace SmartThumbnailsBot
             {
                 ConnectorClient connector = new ConnectorClient(new Uri(activity.ServiceUrl));
 
-                // look at form flow to get height and width: https://docs.botframework.com/en-us/csharp/builder/sdkreference/forms.html
-
                 if (activity.Attachments.Count > 0)
                 {
+                    // TO DO look at form flow to get height and width: https://docs.botframework.com/en-us/csharp/builder/sdkreference/forms.html
+                    var requestedHeight = 100;
+                    var requestedWidth = 100;
+                    var smartCropping = true;
+
                     foreach (var attachment in activity.Attachments)
                     {
+                        //get the source image
                         var sourceImage = await connector.HttpClient.GetStreamAsync(attachment.ContentUrl);
 
-                        var resizedImage = await ComputerVisionService.GetImageThumbnail(sourceImage, 100, 100);
+                        //resize the image using CS
+                        var resizedImage = await ComputerVisionService.GetImageThumbnail(sourceImage, requestedHeight, requestedWidth, smartCropping);
 
+                        //upload the image to storage
+                        var resizedImageBytes = await resizedImage.Content.ReadAsByteArrayAsync();
+                        var resizedImageFileName = activity.Conversation.Id + Guid.NewGuid() + ".jpg";
+                        var storageImageUri = AzureStorageService.Upload(resizedImageBytes, resizedImageFileName);
+
+                        //construct reply
                         Activity replyToConversation = activity.CreateReply("I smartly resized an image for you, I'm good like that");
                         replyToConversation.Recipient = activity.From;
                         replyToConversation.Type = "message";
                         replyToConversation.Attachments = new List<Attachment>();
 
+                        //add attachment to reply
                         var replyFile = new Attachment();
-                        replyFile.Name = "FileName";
-                        //replyFile.Content = resizedImage;
+                        replyFile.Name = "YourNewImage.jpg";
+                        replyFile.ContentUrl = storageImageUri;
                         replyFile.ContentType = "image/jpeg";
                         replyToConversation.Attachments.Add(replyFile);
-
-                        //List<CardImage> cardImages = new List<CardImage>();
-                        //cardImages.Add(new CardImage(url: "https://upload.wikimedia.org/wikipedia/en/a/a6/Bender_Rodriguez.png"));
-
-                        //List<CardAction> cardButtons = new List<CardAction>();
-
-                        //CardAction plButton = new CardAction()
-                        //{
-                        //    Value = "https://upload.wikimedia.org/wikipedia/en/a/a6/Bender_Rodriguez.png",
-                        //    Type = "openUrl",
-                        //    Title = "Download"
-                        //};
-                        //cardButtons.Add(plButton);
-
-                        //ThumbnailCard plCard = new ThumbnailCard()
-                        //{
-                        //    Title = "Here's your new image",
-                        //    Subtitle = "It is centered on the region of interest #clever",
-                        //    Images = cardImages,
-                        //    Buttons = cardButtons
-                        //};
-
-                        //Attachment plAttachment = plCard.ToAttachment();
-                        //replyToConversation.Attachments.Add(plAttachment);
                        
-
+                        //send reply
                         var reply = await connector.Conversations.SendToConversationAsync(replyToConversation);
-
                     }
                 }
                 else
                 {
-                    //reply asking user for an image
+                    // TO DO reply asking user for an image
                 }
             }
             else
@@ -90,17 +77,6 @@ namespace SmartThumbnailsBot
             }
             var response = Request.CreateResponse(HttpStatusCode.OK);
             return response;
-        }
-
-        private string BytesToSrcString(byte[] bytes) => "data:image/jpg;base64," + Convert.ToBase64String(bytes);
-
-        public static byte[] ReadFully(Stream input)
-        {
-            using (MemoryStream ms = new MemoryStream())
-            {
-                input.CopyTo(ms);
-                return ms.ToArray();
-            }
         }
 
         private Activity HandleSystemMessage(Activity message)

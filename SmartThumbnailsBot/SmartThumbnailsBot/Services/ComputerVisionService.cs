@@ -17,7 +17,7 @@ namespace SmartThumbnailsBot.Services
         //_apiUrl: The base URL for the API. Find out what this is for other APIs via the API documentation
         public const string _apiUrlBase = "https://api.projectoxford.ai/vision/v1.0/generateThumbnail";
 
-        public async static Task<Stream> GetImageThumbnail(Stream sourceImage, int height, int width)
+        public async static Task<HttpResponseMessage> GetImageThumbnail(Stream sourceImage, int height, int width, bool smartCropping)
         {
             using (var httpClient = new HttpClient())
             {
@@ -30,13 +30,10 @@ namespace SmartThumbnailsBot.Services
                 content.Headers.ContentType = new MediaTypeWithQualityHeaderValue("application/octet-stream");
 
                 // Request parameters
-                var uri = $"{_apiUrlBase}?width={width}&height={height}&smartCropping={true}";
+                var uri = $"{_apiUrlBase}?width={width}&height={height}&smartCropping={smartCrop}";
 
                 //make request
-                var response = await httpClient.PostAsync(uri, content);
-
-                //return stream
-                return await response.Content.ReadAsStreamAsync();
+                return await httpClient.PostAsync(uri, content);
             }
         }
 

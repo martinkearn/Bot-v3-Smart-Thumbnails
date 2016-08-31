@@ -2,6 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Web;
+using Microsoft.Azure;
+using Microsoft.WindowsAzure.Storage.Blob;
+using Microsoft.WindowsAzure.Storage;
+using System.IO;
 
 namespace SmartThumbnailsBot.Services
 {
@@ -12,11 +16,9 @@ namespace SmartThumbnailsBot.Services
             if (file.Length > 0)
             {
                 var container = GetBlobContainer();
-
-                // Retrieve reference to a blob named "myblob".
+                
                 CloudBlockBlob blockBlob = container.GetBlockBlobReference(filename);
-
-                // Create or overwrite the "myblob" blob with contents from a local file.
+                
                 using (var ms = new MemoryStream(file, false))
                 {
                     blockBlob.UploadFromStream(ms);
@@ -44,13 +46,13 @@ namespace SmartThumbnailsBot.Services
         public static CloudBlobContainer GetBlobContainer()
         {
             // Retrieve storage account from connection string.
-            CloudStorageAccount storageAccount = CloudStorageAccount.Parse(CloudConfigurationManager.GetSetting(Constants.StorageConnectionStringName));
+            CloudStorageAccount storageAccount = CloudStorageAccount.Parse(CloudConfigurationManager.GetSetting("StorageConnectionString");
 
             // Create the blob client.
             CloudBlobClient blobClient = storageAccount.CreateCloudBlobClient();
 
             // Retrieve reference to a previously created container.
-            CloudBlobContainer container = blobClient.GetContainerReference(Constants.StorageImagesContainer);
+            CloudBlobContainer container = blobClient.GetContainerReference(CloudConfigurationManager.GetSetting("StorageBlobContainer");
 
             return container;
         }
