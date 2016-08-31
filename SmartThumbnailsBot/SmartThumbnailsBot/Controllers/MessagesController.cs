@@ -37,36 +37,43 @@ namespace SmartThumbnailsBot
                     {
                         var sourceImage = await connector.HttpClient.GetStreamAsync(attachment.ContentUrl);
 
-                        //var resizedImageBytes = await ComputerVisionService.GetImageThumbnailBytes(sourceImage, 100, 100);
+                        var resizedImage = await ComputerVisionService.GetImageThumbnail(sourceImage, 100, 100);
 
                         Activity replyToConversation = activity.CreateReply("I smartly resized an image for you, I'm good like that");
                         replyToConversation.Recipient = activity.From;
                         replyToConversation.Type = "message";
                         replyToConversation.Attachments = new List<Attachment>();
 
-                        List<CardImage> cardImages = new List<CardImage>();
-                        cardImages.Add(new CardImage(url: "https://upload.wikimedia.org/wikipedia/en/a/a6/Bender_Rodriguez.png"));
+                        var replyFile = new Attachment();
+                        replyFile.Name = "FileName";
+                        //replyFile.Content = resizedImage;
+                        replyFile.ContentType = "image/jpeg";
+                        replyToConversation.Attachments.Add(replyFile);
 
-                        List<CardAction> cardButtons = new List<CardAction>();
+                        //List<CardImage> cardImages = new List<CardImage>();
+                        //cardImages.Add(new CardImage(url: "https://upload.wikimedia.org/wikipedia/en/a/a6/Bender_Rodriguez.png"));
 
-                        CardAction plButton = new CardAction()
-                        {
-                            Value = "https://en.wikipedia.org/wiki/Pig_Latin",
-                            Type = "openUrl",
-                            Title = "WikiPedia Page"
-                        };
-                        cardButtons.Add(plButton);
+                        //List<CardAction> cardButtons = new List<CardAction>();
 
-                        ThumbnailCard plCard = new ThumbnailCard()
-                        {
-                            Title = "I'm a thumbnail card",
-                            Subtitle = "Pig Latin Wikipedia Page",
-                            Images = cardImages,
-                            Buttons = cardButtons
-                        };
+                        //CardAction plButton = new CardAction()
+                        //{
+                        //    Value = "https://upload.wikimedia.org/wikipedia/en/a/a6/Bender_Rodriguez.png",
+                        //    Type = "openUrl",
+                        //    Title = "Download"
+                        //};
+                        //cardButtons.Add(plButton);
 
-                        Attachment plAttachment = plCard.ToAttachment();
-                        replyToConversation.Attachments.Add(plAttachment);
+                        //ThumbnailCard plCard = new ThumbnailCard()
+                        //{
+                        //    Title = "Here's your new image",
+                        //    Subtitle = "It is centered on the region of interest #clever",
+                        //    Images = cardImages,
+                        //    Buttons = cardButtons
+                        //};
+
+                        //Attachment plAttachment = plCard.ToAttachment();
+                        //replyToConversation.Attachments.Add(plAttachment);
+                       
 
                         var reply = await connector.Conversations.SendToConversationAsync(replyToConversation);
 
@@ -86,6 +93,15 @@ namespace SmartThumbnailsBot
         }
 
         private string BytesToSrcString(byte[] bytes) => "data:image/jpg;base64," + Convert.ToBase64String(bytes);
+
+        public static byte[] ReadFully(Stream input)
+        {
+            using (MemoryStream ms = new MemoryStream())
+            {
+                input.CopyTo(ms);
+                return ms.ToArray();
+            }
+        }
 
         private Activity HandleSystemMessage(Activity message)
         {
