@@ -29,13 +29,15 @@ namespace SmartThumbnailsBot
             {
                 ConnectorClient connector = new ConnectorClient(new Uri(activity.ServiceUrl));
 
+                // look at form flow to get height and width: https://docs.botframework.com/en-us/csharp/builder/sdkreference/forms.html
+
                 if (activity.Attachments.Count > 0)
                 {
                     foreach (var attachment in activity.Attachments)
                     {
                         var sourceImage = await connector.HttpClient.GetStreamAsync(attachment.ContentUrl);
 
-                        var resizedImageBytes = await ComputerVisionService.GetImageThumbnailBytes(sourceImage, 100, 100);
+                        //var resizedImageBytes = await ComputerVisionService.GetImageThumbnailBytes(sourceImage, 100, 100);
 
                         Activity replyToConversation = activity.CreateReply("I smartly resized an image for you, I'm good like that");
                         replyToConversation.Recipient = activity.From;

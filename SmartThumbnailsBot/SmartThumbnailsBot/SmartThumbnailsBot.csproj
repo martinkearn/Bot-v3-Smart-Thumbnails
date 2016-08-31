@@ -124,6 +124,7 @@
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Services\AzureStorageService.cs" />
     <Compile Include="Services\ComputerVisionService.cs" />
   </ItemGroup>
   <ItemGroup>
