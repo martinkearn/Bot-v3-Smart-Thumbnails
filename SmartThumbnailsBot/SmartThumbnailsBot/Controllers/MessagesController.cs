@@ -46,11 +46,14 @@ namespace SmartThumbnailsBot
 
                         //upload the image to storage
                         var resizedImageBytes = await resizedImage.Content.ReadAsByteArrayAsync();
-                        var resizedImageFileName = activity.Conversation.Id + Guid.NewGuid() + ".jpg";
+                        var resizedImageFileName = $"{activity.Conversation.Id}-{Guid.NewGuid()}.jpg";
                         var storageImageUri = AzureStorageService.Upload(resizedImageBytes, resizedImageFileName);
 
                         //construct reply
-                        Activity replyToConversation = activity.CreateReply("I smartly resized an image for you, I'm good like that");
+                        var replyText = (smartCropping == true) ?
+                            "I smartly resized an image for you, I'm good like that" :
+                            "I resized an image for you, I'm good like that";
+                        Activity replyToConversation = activity.CreateReply(replyText);
                         replyToConversation.Recipient = activity.From;
                         replyToConversation.Type = "message";
                         replyToConversation.Attachments = new List<Attachment>();

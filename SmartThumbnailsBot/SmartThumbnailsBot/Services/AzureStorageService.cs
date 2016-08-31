@@ -46,13 +46,13 @@ namespace SmartThumbnailsBot.Services
         public static CloudBlobContainer GetBlobContainer()
         {
             // Retrieve storage account from connection string.
-            CloudStorageAccount storageAccount = CloudStorageAccount.Parse(CloudConfigurationManager.GetSetting("StorageConnectionString");
+            CloudStorageAccount storageAccount = CloudStorageAccount.Parse(CloudConfigurationManager.GetSetting("StorageConnectionString"));
 
             // Create the blob client.
             CloudBlobClient blobClient = storageAccount.CreateCloudBlobClient();
 
             // Retrieve reference to a previously created container.
-            CloudBlobContainer container = blobClient.GetContainerReference(CloudConfigurationManager.GetSetting("StorageBlobContainer");
+            CloudBlobContainer container = blobClient.GetContainerReference(CloudConfigurationManager.GetSetting("StorageBlobContainer"));
 
             return container;
         }
