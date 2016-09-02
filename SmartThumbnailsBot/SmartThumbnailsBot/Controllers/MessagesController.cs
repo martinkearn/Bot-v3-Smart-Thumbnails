@@ -139,7 +139,7 @@ namespace SmartThumbnailsBot
         public static IForm<ResizeRequest> BuildForm()
         {
             return new FormBuilder<ResizeRequest>()
-                    .Message("Hi, I am very good at resizing images, I just need the height and width you want your new image to be ...")
+                    .Message("I just a few details about your new image ...")
                     .OnCompletion(async (context, resizeRequestForm) =>
                     {
                         // Set BotUserData
