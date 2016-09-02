@@ -139,7 +139,7 @@ namespace SmartThumbnailsBot
         public static IForm<ResizeRequest> BuildForm()
         {
             return new FormBuilder<ResizeRequest>()
-                    .Message("I just a few details about your new image ...")
+                    .Message("I just need a few details about your new image ...")
                     .OnCompletion(async (context, resizeRequestForm) =>
                     {
                         // Set BotUserData
@@ -149,7 +149,7 @@ namespace SmartThumbnailsBot
                         context.PrivateConversationData.SetValue<bool>("SmartCrop", resizeRequestForm.SmartCrop);
 
                         // Tell the user that the form is complete
-                        await context.PostAsync("OK, thanks, please send me an image now.");
+                        await context.PostAsync("All set, please send me an image now.");
 
                     })
                     .Build();
