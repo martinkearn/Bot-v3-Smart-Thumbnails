@@ -38,7 +38,7 @@ namespace SmartThumbnailsBot
                 // Get any saved values
                 StateClient sc = activity.GetStateClient();
                 BotData userData = sc.BotState.GetPrivateConversationData(activity.ChannelId, activity.Conversation.Id, activity.From.Id);
-
+                
                 var boolDataComplete = userData.GetProperty<bool>("DataComplete");
 
                 if (!boolDataComplete)
@@ -75,6 +75,9 @@ namespace SmartThumbnailsBot
 
                         //send reply
                         var reply = await connector.Conversations.SendToConversationAsync(replyToConversation);
+
+                        //reset user data
+                        await sc.BotState.DeleteStateForUserAsync(activity.ChannelId, activity.From.Id);
                     }
                     else
                     {
@@ -138,6 +141,8 @@ namespace SmartThumbnailsBot
                     })
                     .Build();
         }
+
+
 
         internal static IDialog<ResizeRequest> MakeRootDialog()
         {
