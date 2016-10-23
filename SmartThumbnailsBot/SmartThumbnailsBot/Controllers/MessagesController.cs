@@ -49,15 +49,32 @@ namespace SmartThumbnailsBot
                 else {
                     var height = userData.GetProperty<Int64>("Height");
                     var width = userData.GetProperty<Int64>("Width");
-                    var smartCrop = userData.GetProperty<bool>("SmartCrop");
-
-                    //var height = 100;
-                    //var width = 100;
-                    //var smartCrop = true;
+                    var smartCropping = userData.GetProperty<bool>("SmartCrop");
 
                     if (activity.Attachments.Count > 0)
                     {
-                        await ResizeImage(connector, activity, height, width, smartCrop);
+                        //get the source image
+                        var sourceImage = await connector.HttpClient.GetStreamAsync(activity.Attachments.FirstOrDefault().ContentUrl);
+
+                        //resize the image using the cognitive services computer vision api
+                        var resizedImage = await ComputerVisionService.GetImageThumbnail(sourceImage, height, width, smartCropping);
+
+                        //construct reply
+                        var replyText = (smartCropping == true) ?
+                                "I smartly resized an image for you, I'm good like that" :
+                                "I resized an image for you, I'm good like that";
+                        Activity replyToConversation = activity.CreateReply(replyText);
+                        replyToConversation.Recipient = activity.From;
+                        replyToConversation.Type = "message";
+                        replyToConversation.Attachments = new List<Attachment>();
+
+                        //add attachment to reply
+                        var replyFile = new Attachment();
+                        var image = "data:image/png;base64," + Convert.ToBase64String(resizedImage);
+                        replyToConversation.Attachments.Add(new Attachment { ContentUrl = image, ContentType = "image/png" });
+
+                        //send reply
+                        var reply = await connector.Conversations.SendToConversationAsync(replyToConversation);
                     }
                     else
                     {
@@ -72,39 +89,6 @@ namespace SmartThumbnailsBot
             }
             var response = Request.CreateResponse(HttpStatusCode.OK);
             return response;
-        }
-
-        private async Task ResizeImage(ConnectorClient connector, Activity activity, Int64 height, Int64 width, bool smartCrop)
-        {
-            //get the source image
-            var sourceImage = await connector.HttpClient.GetStreamAsync(activity.Attachments.FirstOrDefault().ContentUrl);
-
-            //resize the image using CS
-            var resizedImage = await ComputerVisionService.GetImageThumbnail(sourceImage, height, width, smartCrop);
-
-            //upload the image to storage
-            var resizedImageBytes = await resizedImage.Content.ReadAsByteArrayAsync();
-            var resizedImageFileName = $"{activity.Conversation.Id}-{Guid.NewGuid()}.jpg";
-            var storageImageUri = AzureStorageService.Upload(resizedImageBytes, resizedImageFileName);
-
-            //construct reply
-            var replyText = (smartCrop == true) ?
-                    "I smartly resized an image for you, I'm good like that" :
-                    "I resized an image for you, I'm good like that";
-            Activity replyToConversation = activity.CreateReply(replyText);
-            replyToConversation.Recipient = activity.From;
-            replyToConversation.Type = "message";
-            replyToConversation.Attachments = new List<Attachment>();
-
-            //add attachment to reply
-            var replyFile = new Attachment();
-            replyFile.Name = "yournewimage.jpg";
-            replyFile.ContentUrl = storageImageUri;
-            replyFile.ContentType = "image/jpeg";
-            replyToConversation.Attachments.Add(replyFile);
-
-            //send reply
-            var reply = await connector.Conversations.SendToConversationAsync(replyToConversation);
         }
 
         private Activity HandleSystemMessage(Activity message)
